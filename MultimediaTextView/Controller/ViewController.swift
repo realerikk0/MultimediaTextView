@@ -7,12 +7,20 @@
 //
 
 import UIKit
+import Photos
+import MobileCoreServices
 
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, UITextViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        navigationItem.title = "MM TextView"
+        
+    }
+    
+    override func viewDidLayoutSubviews() {
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -20,6 +28,6 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
-
 }
+
 
