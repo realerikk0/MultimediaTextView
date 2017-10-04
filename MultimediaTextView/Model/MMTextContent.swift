@@ -8,6 +8,7 @@
 
 import UIKit
 import Photos
+import MobileCoreServices
 
 class MMTextContent {
 
@@ -24,15 +25,7 @@ class MMTextContent {
     }
     /**
      Content Type:
-     1  --  Plain Text in Attributed Text String.
-     2  --  Still Image.
-     3  --  Live Photo^.
-     4  --  GIF^.
-     5  --  Short Video^.
-     
-     99 --  Add content place holder
-     
-     ^  :   Type Current Unavailable
+     Use to judge the type of the current.
      */
     var contentType: ContentTypes?
     
@@ -67,21 +60,37 @@ class MMTextContent {
     init(mediaIs asset: PHAsset?) {
         var type:ContentTypes = .defaultType
         
-        switch asset!.playbackStyle {
-        case .image:
-            type = .stillImage
-            break
-        case .livePhoto:
-            type = .livePhoto
-            break
-        case .imageAnimated:
-            type = .animatedImage
-            break
-        case .video:
-            type = .shortVideo
-            break
-        default:
-            break
+        if #available(iOS 11.0, *) {
+            switch asset!.playbackStyle {
+            case .image:
+                type = .stillImage
+                break
+            case .livePhoto:
+                type = .livePhoto
+                break
+            case .imageAnimated:
+                type = .animatedImage
+                break
+            case .video:
+                type = .shortVideo
+                break
+            default:
+                break
+            }
+        } else {
+            if let identifier = asset!.value(forKey: "uniformTypeIdentifier") as? String {
+                if identifier == kUTTypeLivePhoto as String {
+                    type = .livePhoto
+                }else if identifier == kUTTypeGIF as String {
+                    type = .animatedImage
+                }else if identifier == kUTTypeImage as String {
+                    type = .stillImage
+                }else if identifier == kUTTypeMovie as String {
+                    type = .shortVideo
+                }else{
+                    type = .defaultType
+                }
+            }
         }
         
         self.contentType = type

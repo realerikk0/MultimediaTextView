@@ -39,10 +39,31 @@ class MMTextCreatePostTableViewCell: UITableViewCell, UITextViewDelegate {
         super.awakeFromNib()
         
         attributedTextView.delegate = self
+        attributedTextView.font = UIFont.preferredFont(forTextStyle: .body)
+        //attributedTextView.placeholder = "Your mind begins here..."
+        attributedTextView.keyboardDismissMode = .interactive
+        attributedTextView.inputAccessoryView = inputToolBar
         addTextButton.layer.borderWidth = 1.0
         addTextButton.layer.borderColor = UIColor.lightGray.cgColor
         addTextButton.layer.cornerRadius = 5.0
+        stillImageView.contentMode = .scaleAspectFit
+        livePhotoView.contentMode = .scaleAspectFit
         
+    }
+ 
+    lazy var inputToolBar: UIToolbar = {
+        let toolBar = UIToolbar()
+        toolBar.sizeToFit()
+        
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let returnButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(self.handleDoneClicked))
+        
+        toolBar.setItems([flexibleSpace,returnButton], animated: false)
+        return toolBar
+    }()
+    
+    @objc func handleDoneClicked() {
+        self.endEditing(true)
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
@@ -51,13 +72,20 @@ class MMTextCreatePostTableViewCell: UITableViewCell, UITextViewDelegate {
         // Configure the view for the selected state
     }
     
-//    func textViewDidChange(_ textView: UITextView) {
-//        print("TextView Change Detected!")
-//        delegate?.didAddText(text: textView.attributedText, at: self.tblViewCellId)
-//    }
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        attributedTextView.layer.borderWidth = 1.0
+        attributedTextView.layer.cornerRadius = 2.0
+        attributedTextView.layer.borderColor = UIColor.lightGray.cgColor
+    }
     
     func textViewDidEndEditing(_ textView: UITextView) {
         print("TextView Change Detected!")
+        attributedTextView.layer.borderWidth = 0.0
+        
+        if textView.attributedText.length == 0 {
+            //textView.placeholder = "Your mind begins here..."
+        }
+        
         delegate?.didAddText(text: textView.attributedText, at: self.tblViewCellId)
     }
 

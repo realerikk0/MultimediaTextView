@@ -17,6 +17,7 @@
 		0717BF4D1F7DB50300A7408F /* MultimediaTextViewUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0717BF4C1F7DB50300A7408F /* MultimediaTextViewUITests.swift */; };
 		0717BF5E1F7DBAD200A7408F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0717BF5D1F7DBAD200A7408F /* Default-568h@2x.png */; };
 		0717BF601F7DC8F600A7408F /* MMTextContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0717BF5F1F7DC8F600A7408F /* MMTextContent.swift */; };
+		078F757F1F859705003FA938 /* UITextViewPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078F757E1F859705003FA938 /* UITextViewPlaceholder.swift */; };
 		07C34D9A1F82C56E00355EE0 /* MMTextCreatePostTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07C34D991F82C56E00355EE0 /* MMTextCreatePostTableViewController.swift */; };
 		07C34D9C1F82C5EE00355EE0 /* MMTextCreatePostTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07C34D9B1F82C5EE00355EE0 /* MMTextCreatePostTableViewCell.swift */; };
 		07C34D9E1F82D05D00355EE0 /* AnimatedImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07C34D9D1F82D05D00355EE0 /* AnimatedImage.swift */; };
@@ -57,6 +58,7 @@
 		0717BF4E1F7DB50300A7408F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0717BF5D1F7DBAD200A7408F /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		0717BF5F1F7DC8F600A7408F /* MMTextContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMTextContent.swift; sourceTree = "<group>"; };
+		078F757E1F859705003FA938 /* UITextViewPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITextViewPlaceholder.swift; sourceTree = "<group>"; };
 		07C34D991F82C56E00355EE0 /* MMTextCreatePostTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMTextCreatePostTableViewController.swift; sourceTree = "<group>"; };
 		07C34D9B1F82C5EE00355EE0 /* MMTextCreatePostTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMTextCreatePostTableViewCell.swift; sourceTree = "<group>"; };
 		07C34D9D1F82D05D00355EE0 /* AnimatedImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedImage.swift; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 				07C34D991F82C56E00355EE0 /* MMTextCreatePostTableViewController.swift */,
 				07C34D9B1F82C5EE00355EE0 /* MMTextCreatePostTableViewCell.swift */,
 				07C34D9F1F82ECBE00355EE0 /* AnimatedImageView.swift */,
+				078F757E1F859705003FA938 /* UITextViewPlaceholder.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				07C34D9C1F82C5EE00355EE0 /* MMTextCreatePostTableViewCell.swift in Sources */,
 				0717BF2C1F7DB50300A7408F /* ViewController.swift in Sources */,
 				0717BF601F7DC8F600A7408F /* MMTextContent.swift in Sources */,
+				078F757F1F859705003FA938 /* UITextViewPlaceholder.swift in Sources */,
 				07C34DA01F82ECBE00355EE0 /* AnimatedImageView.swift in Sources */,
 				07C34D9A1F82C56E00355EE0 /* MMTextCreatePostTableViewController.swift in Sources */,
 				07C34D9E1F82D05D00355EE0 /* AnimatedImage.swift in Sources */,
@@ -481,6 +485,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = FA82478PBU;
 				INFOPLIST_FILE = MultimediaTextView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Erth.Eric.MultimediaTextView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -496,6 +501,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = FA82478PBU;
 				INFOPLIST_FILE = MultimediaTextView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Erth.Eric.MultimediaTextView;
 				PRODUCT_NAME = "$(TARGET_NAME)";

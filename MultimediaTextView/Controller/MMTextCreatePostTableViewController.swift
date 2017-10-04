@@ -10,6 +10,7 @@ import UIKit
 import Photos
 import PhotosUI
 import MobileCoreServices
+  
 
 class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -34,6 +35,18 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         }
     }
     
+    func getMediaTypeUnderiOS10(media: PHAsset) -> String {
+        if media.mediaType == .image {
+            if media.mediaSubtypes == .photoLive {
+                return "livePhoto"
+            }
+            return "image/animated image"
+        }else if media.mediaType == .video{
+            return "video"
+        }
+        return "unknownType"
+    }
+    
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         self.dismiss(animated: true, completion: nil)
 
@@ -55,7 +68,11 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             let media = mediaPool.firstObject
             
             print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
-            print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+            if #available(iOS 11.0, *) {
+                print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))")
+            } else {
+                print("Media Type: \(getMediaTypeUnderiOS10(media: media!))")
+            }
             
             content.append(MMTextContent(mediaIs: media))
             tableView.beginUpdates()
@@ -65,19 +82,31 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         }else{ // Take photo and record video not working.
             let mediaType = info[UIImagePickerControllerMediaType] as? NSString
             if mediaType == kUTTypeImage {
-                if let mediaURL = info[UIImagePickerControllerImageURL] as? URL {
-                    let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
-                    let media = mediaPool.firstObject
-                    print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
-                    print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
-
+                if #available(iOS 11.0, *) {
+                    if let mediaURL = info[UIImagePickerControllerImageURL] as? URL {
+                        let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
+                        let media = mediaPool.firstObject
+                        print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
+                        print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+                    }
+                } else {
+                    if let mediaURL = info[UIImagePickerControllerReferenceURL] as? URL {
+                        let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
+                        let media = mediaPool.firstObject
+                        print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
+                        print("Media Type: \(getMediaTypeUnderiOS10(media: media!))" )
+                    }
                 }
             }else if mediaType == kUTTypeMovie {
                 if let mediaURL = info[UIImagePickerControllerMediaURL] as? URL {
                     let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
                     let media = mediaPool.firstObject
                     print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
-                    print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+                    if #available(iOS 11.0, *) {
+                        print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+                    } else {
+                        print("Media Type: \(getMediaTypeUnderiOS10(media: media!))" )
+                    }
 
                 }
             }
@@ -146,9 +175,46 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         super.viewDidLoad()
         
         self.navigationItem.title = "New post"
-        self.navigationItem.rightBarButtonItems = [UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addAsset)),self.editButtonItem]
         
         content.append(MMTextContent(placeholder: true))
+        
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 156
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        NotificationCenter.default.addObserver(forName: .UIContentSizeCategoryDidChange, object: .none, queue: OperationQueue.main, using: { [weak self] _ in
+             self?.tableView.reloadData()
+        })
+    }
+    
+    lazy var accessoryToolBar: UIToolbar = {
+        let toolBar = UIToolbar()
+        toolBar.sizeToFit()
+        
+        let switcher = UISwitch()
+        
+        let switcherItem = UIBarButtonItem(customView: switcher)
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let editButton = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: nil)
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addAsset))
+        
+        toolBar.setItems([switcherItem,flexibleSpace,self.editButtonItem,addButton], animated: false)
+        return toolBar
+    }()
+    
+    override var inputAccessoryView: UIView? {
+        get {
+            return accessoryToolBar
+        }
+    }
+    
+    override var canBecomeFirstResponder: Bool {
+        get {
+            return true
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -165,6 +231,8 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return content.count
     }
+    
+    
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "postContentCell", for: indexPath) as! MMTextCreatePostTableViewCell
@@ -192,19 +260,8 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             
             if let str = content[indexPath.row].MMString {
                 cell.attributedTextView.attributedText = str
-            }
-        }else if content[indexPath.row].contentType == .stillImage {
-            
-            cell.addTextButton.isHidden = true
-            cell.attributedTextView.isHidden = true
-            cell.stillImageView.isHidden = false
-            cell.animatedImageView.isHidden = true
-            cell.livePhotoView.isHidden = true
-            
-            if let imageAsset = content[indexPath.row].MMAsset {
-                if imageAsset.playbackStyle == .image {
-                    updateStillImage(cell: cell, assets: imageAsset)
-                }
+            }else{
+                cell.attributedTextView.attributedText = NSAttributedString(string: "", attributes: nil)
             }
         }else if content[indexPath.row].contentType == .livePhoto {
             
@@ -215,9 +272,17 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             cell.livePhotoView.isHidden = false
             
             if let livePhotoAsset = content[indexPath.row].MMAsset {
-                if livePhotoAsset.playbackStyle == .livePhoto {
-                    updateLivePhoto(cell: cell, assets: livePhotoAsset)
+                if #available(iOS 11.0, *) {
+                    if livePhotoAsset.playbackStyle == .livePhoto {
+                        updateLivePhoto(cell: cell, assets: livePhotoAsset)
+                    }
+                } else {
+                    if livePhotoAsset.mediaSubtypes == .photoLive {
+                        updateLivePhoto(cell: cell, assets: livePhotoAsset)
+                    }
                 }
+            }else{
+                cell.livePhotoView.livePhoto = nil
             }
         }else if content[indexPath.row].contentType == .animatedImage {
             
@@ -228,14 +293,47 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             cell.livePhotoView.isHidden = true
             
             if let animatedImageAsset = content[indexPath.row].MMAsset {
-                if animatedImageAsset.playbackStyle == .imageAnimated {
-                    updateAnimatedImage(cell: cell, assets: animatedImageAsset)
+                if #available(iOS 11.0, *) {
+                    if animatedImageAsset.playbackStyle == .imageAnimated {
+                        updateAnimatedImage(cell: cell, assets: animatedImageAsset)
+                    }
+                } else {
+                    if let mediaIdentifier = animatedImageAsset.value(forKey: "uniformTypeIdentifier") as? String {
+                        if mediaIdentifier == kUTTypeGIF as String {
+                            updateAnimatedImage(cell: cell, assets: animatedImageAsset)
+                        }
+                    }
                 }
+            }else{
+                cell.animatedImageView.animatedImage = nil
+            }
+        }else if content[indexPath.row].contentType == .stillImage {
+            
+            cell.addTextButton.isHidden = true
+            cell.attributedTextView.isHidden = true
+            cell.stillImageView.isHidden = false
+            cell.animatedImageView.isHidden = true
+            cell.livePhotoView.isHidden = true
+            
+            if let imageAsset = content[indexPath.row].MMAsset {
+                if #available(iOS 11.0, *) {
+                    if imageAsset.playbackStyle == .image {
+                        updateStillImage(cell: cell, assets: imageAsset)
+                    }
+                } else { // Potentially crash: here assumes in iOS, image contains only still image, live photo and animated image(GIF)
+                    if imageAsset.mediaType == .image {
+                        updateStillImage(cell: cell, assets: imageAsset)
+                    }
+                }
+            }else{
+                cell.stillImageView.image = nil
             }
         }
 
         return cell
     }
+    
+    
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //let cell = tableView.cellForRow(at: indexPath) as! MMTextCreatePostTableViewCell
