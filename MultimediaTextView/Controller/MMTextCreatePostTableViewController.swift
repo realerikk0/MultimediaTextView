@@ -9,10 +9,80 @@
 import UIKit
 import Photos
 import PhotosUI
+import MobileCoreServices
 
 class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var content: [MMTextContent] = []
+    
+    func getMediaTypeName(type:Int) -> String {
+        switch type {
+        case 1:
+            return "image"
+        case 2:
+            return "imageAnimated"
+        case 3:
+            return "livePhoto"
+        case 4:
+            return "unsupported"
+        case 5:
+            return "video"
+        case 6:
+            return "videoLooping"
+        default:
+            return "errorType"
+        }
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        self.dismiss(animated: true, completion: nil)
+
+//        if let media = info[UIImagePickerControllerPHAsset] as? PHAsset {
+//            print(media)
+//
+//            content.append(MMTextContent(mediaIs: media))
+//            tableView.beginUpdates()
+//            tableView.insertRows(at: [IndexPath(row: content.count - 1, section: 0)], with: UITableViewRowAnimation.automatic)
+//            tableView.endUpdates()
+//        }else{
+//            print("Cannot Load Asset!")
+//        }
+        
+        if let mediaURL = info[UIImagePickerControllerReferenceURL] as? URL {
+            print(mediaURL)
+            let mediaType = info[UIImagePickerControllerMediaType] as? NSString
+            let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
+            let media = mediaPool.firstObject
+            
+            print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
+            print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+            
+            content.append(MMTextContent(mediaIs: media))
+            tableView.beginUpdates()
+            tableView.insertRows(at: [IndexPath(row: content.count - 1, section: 0)], with: UITableViewRowAnimation.automatic)
+            tableView.endUpdates()
+            
+        }else{ // Take photo and record video not working.
+            let mediaType = info[UIImagePickerControllerMediaType] as? NSString
+            if mediaType == kUTTypeImage {
+                if let mediaURL = info[UIImagePickerControllerImageURL] as? URL {
+                    let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
+                    let media = mediaPool.firstObject
+                    print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
+                    print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+
+                }
+            }else if mediaType == kUTTypeMovie {
+                if let mediaURL = info[UIImagePickerControllerMediaURL] as? URL {
+                    let mediaPool = PHAsset.fetchAssets(withALAssetURLs: [mediaURL], options: nil)
+                    let media = mediaPool.firstObject
+                    print(media?.value(forKey: "filename") ?? "Error: File no name or no file captured.")
+                    print("Media Type: \(getMediaTypeName(type: (media?.playbackStyle.rawValue)!))" )
+
+                }
+            }
+        }
+    }
     
     /**
       Generate and present an alert view with single button.
@@ -38,8 +108,9 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         
         actionSheet.addAction(UIAlertAction(title: "Take a picture", style: .default, handler: {(action: UIAlertAction) in
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                imagePickerController.sourceType = .camera
+                imagePickerController.sourceType = UIImagePickerControllerSourceType.camera
                 imagePickerController.cameraCaptureMode = .photo
+                imagePickerController.showsCameraControls = true
                 self.present(imagePickerController, animated: true, completion: nil)
             }else{
                 self.singleButtonAlert(alertTitle: "Camera is not allowed", alertMsg: "ERROR: Camera is not available!", buttonTitle: "OK", buttonStyle: .cancel)
@@ -48,7 +119,10 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         actionSheet.addAction(UIAlertAction(title: "Record a video", style: .default, handler: {(action: UIAlertAction) in
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 imagePickerController.sourceType = .camera
-                imagePickerController.cameraCaptureMode = .video
+                imagePickerController.mediaTypes = [kUTTypeMovie as String]
+                imagePickerController.videoMaximumDuration = 10.0
+                imagePickerController.showsCameraControls = true
+                imagePickerController.videoQuality = .typeHigh
                 self.present(imagePickerController, animated: true, completion: nil)
             }else{
                 self.singleButtonAlert(alertTitle: "Camera is not allowed", alertMsg: "ERROR: Camera is not available!", buttonTitle: "OK", buttonStyle: .cancel)
@@ -57,6 +131,7 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         actionSheet.addAction(UIAlertAction(title: "Photo Library", style: .default, handler: {(action: UIAlertAction) in
             if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
                 imagePickerController.sourceType = .photoLibrary
+                imagePickerController.mediaTypes = [kUTTypeImage as String]//UIImagePickerController.availableMediaTypes(for: .camera)!
                 self.present(imagePickerController, animated: true, completion: nil)
             }else{
                 self.singleButtonAlert(alertTitle: "Photo Library is not allowed", alertMsg: "ERROR: Photo Library is not available!", buttonTitle: "OK", buttonStyle: .cancel)
@@ -140,7 +215,7 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             cell.livePhotoView.isHidden = false
             
             if let livePhotoAsset = content[indexPath.row].MMAsset {
-                if livePhotoAsset.playbackStyle == .image {
+                if livePhotoAsset.playbackStyle == .livePhoto {
                     updateLivePhoto(cell: cell, assets: livePhotoAsset)
                 }
             }
@@ -153,7 +228,7 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
             cell.livePhotoView.isHidden = true
             
             if let animatedImageAsset = content[indexPath.row].MMAsset {
-                if animatedImageAsset.playbackStyle == .image {
+                if animatedImageAsset.playbackStyle == .imageAnimated {
                     updateAnimatedImage(cell: cell, assets: animatedImageAsset)
                 }
             }
@@ -172,40 +247,41 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
     }
     
 
-    /*
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
-        return true
+        if self.isEditing {
+            if content[indexPath.row].contentType == .placeholder {
+                return false
+            }else{
+                return true
+            }
+        }else{
+            return false
+        }
     }
-    */
 
-    /*
     // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
+            content.remove(at: indexPath.row)
+            tableView.beginUpdates()
             tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+            tableView.endUpdates()
+        }
     }
-    */
-
-    /*
+    
     // Override to support rearranging the table view.
     override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
+       content.insert(content.remove(at: fromIndexPath.row), at: to.row)
     }
-    */
-
-    /*
+ 
     // Override to support conditional rearranging of the table view.
     override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the item to be re-orderable.
         return true
     }
-    */
     
     func targetSize(view: UIImageView) -> CGSize {
         let scale = UIScreen.main.scale
@@ -248,7 +324,7 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
     func updateLivePhoto(cell: MMTextCreatePostTableViewCell, assets: PHAsset) {
         // Prepare the options to pass when fetching the live photo.
         let options = PHLivePhotoRequestOptions()
-        options.deliveryMode = .highQualityFormat
+        options.deliveryMode = .opportunistic
         options.isNetworkAccessAllowed = true
         options.progressHandler = { progress, _, _, _ in
             // Handler might not be called on the main queue, so re-dispatch for UI work.
@@ -295,7 +371,9 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
         }
         
         cell.progressView.isHidden = false
-        PHImageManager.default().requestImageData(for: assets, options: options, resultHandler: { (data, _, _, _) in
+        PHImageManager.default().requestImageData(for: assets,
+                                                  options: options,
+                                                  resultHandler: { (data, _, _, _) in
             // Hide the progress view not the request has completed.
             cell.progressView.isHidden = true
             
@@ -321,22 +399,35 @@ class MMTextCreatePostTableViewController: UITableViewController, UIImagePickerC
 
 extension MMTextCreatePostTableViewController: MMTextCreatePostTableViewCellDelegate {
     func didTapAddText() {
-        if content[content.count - 1].contentType == .placeholder {
-            
-            content[content.count - 1].contentType = .attributedText
-            let cell = tableView.cellForRow(at: IndexPath(row: content.count - 1, section: 0)) as! MMTextCreatePostTableViewCell
-            
-            cell.addTextButton.isHidden = true
-            cell.attributedTextView.isHidden = false
-            cell.stillImageView.isHidden = true
-            cell.animatedImageView.isHidden = true
-            cell.livePhotoView.isHidden = true
-            
-            content.append(MMTextContent(placeholder: true))
-            tableView.beginUpdates()
-            tableView.insertRows(at: [IndexPath(row: content.count - 1, section: 0)], with: .automatic)
-            tableView.endUpdates()
-            
+        /**
+         Mark if add cell action has been processed.
+         */
+        var processed = false
+        for i in 0 ... content.count - 1 {
+            if !processed && content[i].contentType == .placeholder {
+                content[i].contentType = .attributedText
+                let cell = tableView.cellForRow(at: IndexPath(row: i, section: 0)) as! MMTextCreatePostTableViewCell
+                
+                cell.addTextButton.isHidden = true
+                cell.attributedTextView.isHidden = false
+                cell.stillImageView.isHidden = true
+                cell.animatedImageView.isHidden = true
+                cell.livePhotoView.isHidden = true
+                
+                if i == content.count - 1 {
+                    content.append(MMTextContent(placeholder: true))
+                    tableView.beginUpdates()
+                    tableView.insertRows(at: [IndexPath(row: content.count - 1, section: 0)], with: UITableViewRowAnimation.automatic)
+                    tableView.endUpdates()
+                    processed = true
+                }else{
+                    content.insert(MMTextContent(placeholder: true), at: i + 1)
+                    tableView.beginUpdates()
+                    tableView.insertRows(at: [IndexPath(row: i + 1, section: 0)], with: UITableViewRowAnimation.automatic)
+                    tableView.endUpdates()
+                    processed = true
+                }
+            }
         }
     }
     
